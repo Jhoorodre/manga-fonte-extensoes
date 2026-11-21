@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
-internal fun shouldRateLimit(url: HttpUrl, baseHost: String): Boolean = url.host == baseHost && !url.encodedPath.startsWith("/wp-content/uploads/")
+internal fun isDynamicSiteRequest(url: HttpUrl, baseHost: String): Boolean = url.host == baseHost && !url.encodedPath.startsWith("/wp-content/uploads/")
 
 @Source
 abstract class MonteTai : Madara() {
@@ -26,7 +26,8 @@ abstract class MonteTai : Madara() {
 
     override fun OkHttpClient.Builder.configureClient(): OkHttpClient.Builder {
         val baseHost = baseUrl.toHttpUrl().host
-        return rateLimit(3, 1.seconds) { shouldRateLimit(it, baseHost) }
+        return rateLimit(3, 1.seconds) { isDynamicSiteRequest(it, baseHost) }
+            .rateLimit(10, 1.seconds)
     }
 
     override val mangaDetailsSelectorThumbnail = ".mtx-cover img"
